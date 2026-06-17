@@ -138,6 +138,18 @@ html, body {
   color: var(--soft-ink); opacity: 0.75; margin-top: 10px; line-height: 1.5;
 }
 
+#compass {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  background: rgba(241, 232, 211, 0.92); border: 1px solid var(--line); border-radius: 50%;
+  box-shadow: 0 1px 0 rgba(255,248,230,0.6) inset, 0 8px 20px -10px rgba(42,32,26,0.3);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+#compass svg { display: block; transition: transform 0.25s ease; transform-origin: 50% 50%; }
+#compass .cn-arrow { fill: var(--terracotta); }
+#compass .cn-tail { fill: var(--soft-ink); opacity: 0.5; }
+#compass .cn-label { fill: var(--ink); font: 600 8px 'JetBrains Mono', monospace; }
+
 .search-row { display: flex; gap: 6px; margin-top: 12px; }
 #search-input {
   flex: 1; min-width: 0;
@@ -181,6 +193,14 @@ html, body {
   <div><span class="key">arrastrar</span> recorrer</div>
   <div><span class="key">scroll</span> zoom ciudad↔calle</div>
   <div><span class="key">buscar</span> saltar a…</div>
+</div>
+
+<div id="compass" title="Norte">
+  <svg id="compass-svg" width="30" height="30" viewBox="-15 -16 30 32" xmlns="http://www.w3.org/2000/svg">
+    <polygon class="cn-arrow" points="0,-13 4.5,1 0,-2.5 -4.5,1"/>
+    <polygon class="cn-tail" points="0,13 4.5,-1 0,2.5 -4.5,-1"/>
+    <text class="cn-label" x="0" y="-13.5" text-anchor="middle">N</text>
+  </svg>
 </div>
 
 <div id="attribution">© Google</div>

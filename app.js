@@ -3,7 +3,7 @@
 // Pan to recorrer the city, scroll to zoom (city overview ↔ street detail), search to jump.
 
 import {
-  Scene, WebGLRenderer, OrthographicCamera, MathUtils,
+  Scene, WebGLRenderer, OrthographicCamera, MathUtils, Vector3,
   AmbientLight, HemisphereLight, DirectionalLight,
   ACESFilmicToneMapping, SRGBColorSpace, MOUSE, TOUCH,
 } from 'three';
@@ -22,7 +22,7 @@ import {
 // ---- Config ----------------------------------------------------------------
 const HOME = { name: 'Plaza Luis Cabrera', secondary: 'Roma Norte · Cuauhtémoc', lat: 19.41633, lon: -99.15955 };
 const VIEW_RADIUS = 320;   // metres half-extent the ortho camera frames at zoom 1
-const ISO_AZ = MathUtils.degToRad(45);       // azimuth: classic iso = 45°
+const ISO_AZ = MathUtils.degToRad(225);      // iso corner view from the NE → north reads toward top
 const ISO_EL = MathUtils.degToRad(35.264);   // elevation: true iso = atan(1/√2)
 const CAM_DIST = 60000;    // ortho: only direction matters; sit far back so geometry stays in [near,far]
 const ERROR_TARGET = 14;   // tile screen-space error: lower = sharper + more tiles + more $$
@@ -45,6 +45,7 @@ const locLineEl = document.getElementById('location-line');
 const latEl = document.getElementById('stat-lat');
 const lonEl = document.getElementById('stat-lon');
 const zoomEl = document.getElementById('stat-zoom');
+const compassSvg = document.getElementById('compass-svg');
 
 function setStatus(text, cls = '') {
   statusEl.textContent = text;
@@ -132,6 +133,7 @@ let tiles = null;
 let currentKey = '';
 let firstContent = false;
 let safetyTimer = null;
+let anchorLat = HOME.lat, anchorLon = HOME.lon;
 
 function initTiles(apiToken, lat, lon) {
   tiles = new TilesRenderer();
@@ -154,6 +156,7 @@ function initTiles(apiToken, lat, lon) {
   tiles.setCamera(camera);
   tiles.setResolutionFromRenderer(camera, renderer);
   scene.add(tiles.group);
+  anchorLat = lat; anchorLon = lon;
 
   firstContent = false;
   tiles.addEventListener('load-content', () => {
@@ -214,6 +217,19 @@ function watchSearchReady() {
   requestAnimationFrame(watchSearchReady);
 }
 
+// ---- Compass (points to true north; view never rotates so this is stable) --
+const _cE = new Vector3(), _cN = new Vector3(), _cU = new Vector3();
+const _cO = new Vector3(), _cP = new Vector3();
+function updateCompass() {
+  if (!tiles || !tiles.ellipsoid || !compassSvg) return;
+  tiles.ellipsoid.getEastNorthUpAxes(MathUtils.degToRad(anchorLat), MathUtils.degToRad(anchorLon), _cE, _cN, _cU);
+  _cN.transformDirection(tiles.group.matrixWorld);     // ellipsoid-north → world-north
+  _cO.set(0, 0, 0).project(camera);
+  _cP.copy(_cN).multiplyScalar(50).project(camera);
+  const deg = Math.atan2(_cP.x - _cO.x, _cP.y - _cO.y) * 180 / Math.PI; // 0 = up, + = clockwise
+  compassSvg.style.transform = 'rotate(' + deg.toFixed(1) + 'deg)';
+}
+
 // ---- Loop ------------------------------------------------------------------
 const attrTarget = [];
 function tick() {
@@ -224,6 +240,7 @@ function tick() {
     tiles.setResolutionFromRenderer(camera, renderer);
     tiles.setCamera(camera);
     tiles.update();
+    updateCompass();
     if (typeof tiles.getAttributions === 'function') {
       attrTarget.length = 0;
       tiles.getAttributions(attrTarget);
