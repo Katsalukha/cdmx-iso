@@ -165,19 +165,6 @@ html, body {
 }
 #search-btn:hover { opacity: 0.88; }
 #search-btn:disabled { opacity: 0.4; cursor: wait; }
-
-#style-bar {
-  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 2px; padding: 4px;
-}
-.style-btn {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
-  text-transform: uppercase; padding: 7px 13px;
-  background: transparent; border: none; border-radius: 1px;
-  color: var(--soft-ink); cursor: pointer; transition: background 0.15s, color 0.15s;
-}
-.style-btn:hover { color: var(--ink); background: var(--line-soft); }
-.style-btn.active { background: var(--ink); color: var(--bone); }
 </style>
 </head>
 <body>
@@ -214,14 +201,6 @@ html, body {
     <polygon class="cn-tail" points="0,13 4.5,-1 0,2.5 -4.5,-1"/>
     <text class="cn-label" x="0" y="-13.5" text-anchor="middle">N</text>
   </svg>
-</div>
-
-<div id="style-bar" class="panel">
-  <button class="style-btn active" data-style="0">Foto</button>
-  <button class="style-btn" data-style="1">Pixel</button>
-  <button class="style-btn" data-style="2">Póster</button>
-  <button class="style-btn" data-style="3">Acuarela</button>
-  <button class="style-btn" data-style="4">Cómic</button>
 </div>
 
 <div id="attribution">© Google</div>
