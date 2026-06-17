@@ -5,7 +5,7 @@
 import {
   Scene, WebGLRenderer, OrthographicCamera, MathUtils,
   AmbientLight, HemisphereLight, DirectionalLight,
-  ACESFilmicToneMapping, SRGBColorSpace,
+  ACESFilmicToneMapping, SRGBColorSpace, MOUSE, TOUCH,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -110,11 +110,14 @@ applyFrustum();
 
 // Fixed iso angle: pan + zoom only (no free orbit), for the "specimen on a table" look.
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableRotate = false;
+controls.enableRotate = false;          // fixed iso angle
 controls.screenSpacePanning = true;
 controls.minZoom = 0.25;
 controls.maxZoom = 12;
 controls.target.set(0, 0, 0);
+// Rotate is off, so map left-drag (and one-finger touch) to PAN instead of doing nothing.
+controls.mouseButtons = { LEFT: MOUSE.PAN, MIDDLE: MOUSE.DOLLY, RIGHT: MOUSE.PAN };
+controls.touches = { ONE: TOUCH.PAN, TWO: TOUCH.DOLLY_PAN };
 
 // ---- Tiles -----------------------------------------------------------------
 let tiles = null;
