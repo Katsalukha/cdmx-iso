@@ -10,23 +10,29 @@ through a fixed **orthographic camera**. This is the technique behind
 
 Default location: **Plaza Luis Cabrera** (19.41633, -99.15955), Roma Norte.
 
-## Status — Phase 1
+## Status — Scenario A: live whole-city roam
 
-A single-location live 3D view under the iso camera (pan + zoom). This is the building block for the
-whole-city options below; **decide Phase 2 after Phase 1 is working.**
+A live, interactive whole-city viewer:
+- **Pan** (drag) to recorrer the city — tiles stream by view, old ones unload.
+- **Zoom** (scroll) from street detail all the way out to a whole-CDMX overview.
+- **Search** (Nominatim geocode) to jump to any colonia/address — re-anchors the tileset there.
 
-| Path | What it is | Whole-city | Cost to run | Effort |
-|------|------------|------------|-------------|--------|
-| **A. Live 3D roam** | Stream tiles in-browser | yes, coarse when zoomed out | bills Google per view/pan | low–med |
-| **B. Baked iso map** (true isometric.nyc) | Offline-render → image pyramid → static images | yes, instant, exact look | free to serve | high (offline GPU pipeline) |
-| **C. Neighborhood viewer** | One spot via search/dropdown | no | bounded | low |
+Default anchor: **Plaza Luis Cabrera**, Roma Norte. Fully **terms-compliant** (live visualization
+only — Google's Map Tiles policy forbids caching / pre-rendering / offline use, so the "baked
+isometric.nyc poster" approach is off the table for Google tiles).
+
+> Considered but not taken: **B** — a baked isometric image pyramid (the literal isometric.nyc) would
+> be free to serve but requires *caching Google's tiles*, which violates Google's terms; doing it from
+> OpenStreetMap is legal but only yields a stylized (non-photoreal) look. A live roam is the
+> compliant way to get whole-city Google photorealism.
 
 ## Tech
 
 - **three.js r0.170** + **`3d-tiles-renderer@0.4.28`** (NASA-AMMOS), loaded from
   [esm.sh](https://esm.sh) via an `importmap`. No build step, no package manager — same as `cdmx-3d`.
-- `GoogleCloudAuthPlugin` (direct Google key) · `ReorientationPlugin` (puts the target lat/lon at the
-  scene origin) · `GLTFExtensionsPlugin` + `DRACOLoader` (Google tiles are Draco-compressed glTF) ·
+- `GoogleCloudAuthPlugin` (direct Google key) · `ReorientationPlugin` (anchors a lat/lon at the scene
+  origin; re-created on search to jump) · `UnloadTilesPlugin` (frees memory while roaming) ·
+  `GLTFExtensionsPlugin` + `DRACOLoader` (Google tiles are Draco-compressed glTF) ·
   `TileCompressionPlugin` · `TilesFadePlugin`.
 
 ```

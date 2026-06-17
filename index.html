@@ -137,6 +137,22 @@ html, body {
   font-family: 'JetBrains Mono', monospace; font-size: 9px;
   color: var(--soft-ink); opacity: 0.75; margin-top: 10px; line-height: 1.5;
 }
+
+.search-row { display: flex; gap: 6px; margin-top: 12px; }
+#search-input {
+  flex: 1; min-width: 0;
+  background: rgba(255, 251, 240, 0.6); border: 1px solid var(--line);
+  border-radius: 3px; padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); outline: none;
+}
+#search-input::placeholder { color: var(--soft-ink); opacity: 0.7; }
+#search-input:focus { border-color: var(--terracotta); }
+#search-btn {
+  background: var(--ink); color: var(--bone); border: none; border-radius: 3px;
+  padding: 0 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; cursor: pointer;
+}
+#search-btn:hover { opacity: 0.88; }
+#search-btn:disabled { opacity: 0.4; cursor: wait; }
 </style>
 </head>
 <body>
@@ -144,9 +160,13 @@ html, body {
 
 <div id="header-panel" class="panel">
   <div class="title-block">
-    <div class="eyebrow">Modelo fotorrealístico · ISO</div>
-    <h1 class="title">Plaza <em>Luis Cabrera</em></h1>
-    <div class="location-line">Roma Norte · Cuauhtémoc, CDMX</div>
+    <div class="eyebrow">Fotorrealístico · ISO · CDMX</div>
+    <h1 class="title" id="title">Plaza <em>Luis Cabrera</em></h1>
+    <div class="location-line" id="location-line">Roma Norte · Cuauhtémoc</div>
+  </div>
+  <div class="search-row">
+    <input id="search-input" type="text" placeholder="ir a una colonia, dirección…" autocomplete="off" spellcheck="false">
+    <button id="search-btn" title="Buscar">↵</button>
   </div>
   <div id="status" class="status-row">Inicializando…</div>
 </div>
@@ -158,9 +178,9 @@ html, body {
 </div>
 
 <div id="controls-hint" class="panel">
-  <div><span class="key">arrastrar</span> mover</div>
-  <div><span class="key">scroll</span> zoom</div>
-  <div><span class="key">+ −</span> zoom</div>
+  <div><span class="key">arrastrar</span> recorrer</div>
+  <div><span class="key">scroll</span> zoom ciudad↔calle</div>
+  <div><span class="key">buscar</span> saltar a…</div>
 </div>
 
 <div id="attribution">© Google</div>
