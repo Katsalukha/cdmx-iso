@@ -1,0 +1,9 @@
+# local-only Google Maps key (optional convenience; window.CDMX_GOOGLE_KEY)
+config.local.js
+
+# reference copy of the archived stylized app (not part of this fork)
+_cdmx3d_ref.html
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

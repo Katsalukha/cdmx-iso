@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Plaza Luis Cabrera — isométrico fotorrealístico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bone: #f1e8d3;
+  --paper: #ebe1c6;
+  --terracotta: #a85a3e;
+  --rust: #8a4a32;
+  --ink: #2a201a;
+  --soft-ink: #5a4d42;
+  --line: rgba(42, 32, 26, 0.14);
+  --line-soft: rgba(42, 32, 26, 0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: 'Fraunces', serif;
+  background: var(--bone);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; }
+#canvas:active { cursor: grabbing; }
+
+.panel {
+  position: absolute;
+  background: rgba(241, 232, 211, 0.92);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--line);
+  border-radius: 1px;
+  padding: 16px 18px;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.6) inset,
+    0 16px 40px -12px rgba(42, 32, 26, 0.22),
+    0 2px 8px rgba(42, 32, 26, 0.06);
+}
+
+#header-panel { top: 20px; left: 20px; width: 300px; }
+
+.title-block { margin-bottom: 0; }
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--soft-ink); opacity: 0.75;
+}
+.title {
+  font-family: 'Fraunces', serif; font-weight: 500;
+  font-size: 26px; line-height: 1.05; letter-spacing: -0.015em;
+  color: var(--ink); margin-top: 4px; font-variation-settings: "opsz" 144;
+}
+.title em { font-style: italic; font-weight: 400; color: var(--rust); }
+.location-line {
+  font-family: 'Fraunces', serif; font-size: 13px; font-style: italic;
+  color: var(--soft-ink); margin-top: 6px; letter-spacing: 0.01em;
+}
+.status-row {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--soft-ink); letter-spacing: 0.04em;
+  margin-top: 12px; padding-top: 10px; border-top: 1px dotted var(--line);
+  min-height: 12px; opacity: 0.9;
+}
+.status-row.error { color: var(--rust); }
+.status-row.ok { color: var(--terracotta); }
+
+#info-panel { bottom: 20px; left: 20px; width: 200px; }
+.stat-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; padding: 5px 0; border-bottom: 1px dotted var(--line);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--soft-ink); letter-spacing: 0.06em; text-transform: uppercase; font-size: 9px; }
+.stat-value { color: var(--ink); font-weight: 500; }
+
+#controls-hint {
+  top: 20px; right: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--soft-ink);
+  text-align: right; letter-spacing: 0.03em;
+  padding: 12px 14px; line-height: 1.7; transition: opacity 0.2s;
+}
+#controls-hint .key {
+  font-weight: 500; color: var(--ink);
+  background: var(--line-soft); padding: 1px 5px; border-radius: 1px; margin-right: 4px;
+}
+
+#attribution {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  letter-spacing: 0.06em; color: var(--soft-ink); opacity: 0.7;
+  text-transform: uppercase; pointer-events: none; max-width: 60vw;
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ============ API-key modal ============ */
+#key-modal {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(235, 225, 198, 0.72);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+#key-modal.hidden { display: none; }
+.key-card { width: 380px; max-width: calc(100vw - 40px); }
+.key-card .title { font-size: 22px; margin-top: 6px; }
+.key-card p {
+  font-family: 'Fraunces', serif; font-size: 13px; line-height: 1.5;
+  color: var(--soft-ink); margin: 12px 0;
+}
+.key-card a { color: var(--terracotta); }
+.key-input-row { display: flex; gap: 6px; margin-top: 6px; }
+#key-input {
+  flex: 1; min-width: 0;
+  background: rgba(255, 251, 240, 0.6); border: 1px solid var(--line);
+  border-radius: 3px; padding: 9px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink); outline: none;
+}
+#key-input:focus { border-color: var(--terracotta); }
+#key-submit {
+  background: var(--ink); color: var(--bone); border: none; border-radius: 3px;
+  padding: 0 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; cursor: pointer;
+}
+#key-submit:hover { opacity: 0.88; }
+.key-note {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--soft-ink); opacity: 0.75; margin-top: 10px; line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="header-panel" class="panel">
+  <div class="title-block">
+    <div class="eyebrow">Modelo fotorrealístico · ISO</div>
+    <h1 class="title">Plaza <em>Luis Cabrera</em></h1>
+    <div class="location-line">Roma Norte · Cuauhtémoc, CDMX</div>
+  </div>
+  <div id="status" class="status-row">Inicializando…</div>
+</div>
+
+<div id="info-panel" class="panel">
+  <div class="stat-row"><span class="stat-label">Lat</span><span class="stat-value" id="stat-lat">—</span></div>
+  <div class="stat-row"><span class="stat-label">Lon</span><span class="stat-value" id="stat-lon">—</span></div>
+  <div class="stat-row"><span class="stat-label">Zoom</span><span class="stat-value" id="stat-zoom">—</span></div>
+</div>
+
+<div id="controls-hint" class="panel">
+  <div><span class="key">arrastrar</span> mover</div>
+  <div><span class="key">scroll</span> zoom</div>
+  <div><span class="key">+ −</span> zoom</div>
+</div>
+
+<div id="attribution">© Google</div>
+
+<div id="key-modal" class="hidden">
+  <div class="key-card panel">
+    <div class="eyebrow">Acceso · Google Maps Platform</div>
+    <h2 class="title">Clave de API</h2>
+    <p>Este visor usa los <strong>Photorealistic 3D Tiles</strong> de Google. Pega tu clave de la
+       <em>Map Tiles API</em> para cargar la malla 3D de la ciudad.</p>
+    <div class="key-input-row">
+      <input id="key-input" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
+      <button id="key-submit">Entrar</button>
+    </div>
+    <div class="key-note">
+      La clave se guarda solo en tu navegador (localStorage); no se sube a ningún servidor.
+      Restríngela por referente HTTP y a la Map Tiles API en Google Cloud Console.
+      ¿No tienes una? <a href="https://developers.google.com/maps/documentation/tile/3d-tiles-overview" target="_blank" rel="noopener">Guía de Google →</a>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.170.0",
+    "three/addons/": "https://esm.sh/three@0.170.0/examples/jsm/",
+    "3d-tiles-renderer": "https://esm.sh/3d-tiles-renderer@0.4.28?external=three",
+    "3d-tiles-renderer/plugins": "https://esm.sh/3d-tiles-renderer@0.4.28/plugins?external=three"
+  }
+}
+</script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
