@@ -26,6 +26,21 @@ isometric.nyc poster" approach is off the table for Google tiles).
 > OpenStreetMap is legal but only yields a stylized (non-photoreal) look. A live roam is the
 > compliant way to get whole-city Google photorealism.
 
+## Illustrated isometric map — [`/art/`](https://katsalukha.github.io/cdmx-iso/art/)
+
+A second view lives at **`katsalukha.github.io/cdmx-iso/art/`**: an **AI-illustrated** isometric
+render of the same neighborhood, served as a seamless Deep Zoom pyramid (OpenSeaDragon). The photoreal
+3D-tiles mesh was captured under the ortho camera, then each tile was redrawn by a fine-tuned
+image-edit model trained on an *infill* task so tiles continue their neighbors with no seams. Static
+images only — no API key, nothing to bill. Base imagery © Google; heavily transformed by AI.
+
+```
+art/index.html      # OpenSeaDragon viewer (loads the .dzi pyramid)
+art/cdmx.dzi         # Deep Zoom descriptor
+art/cdmx_files/      # tile pyramid (jpeg)
+art/cdmx-full.jpg    # single-image fallback
+```
+
 ## Tech
 
 - **three.js r0.170** + **`3d-tiles-renderer@0.4.28`** (NASA-AMMOS), loaded from

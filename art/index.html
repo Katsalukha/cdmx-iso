@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>CDMX Isométrico — ilustrado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+<style>
+:root {
+  --bone: #f1e8d3; --terracotta: #a85a3e; --rust: #8a4a32;
+  --ink: #2a201a; --soft-ink: #5a4d42; --line: rgba(42,32,26,0.14);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Fraunces', serif; background: var(--bone); color: var(--ink); user-select: none; }
+#osd { position: absolute; inset: 0; background: var(--bone); cursor: grab; }
+#osd:active { cursor: grabbing; }
+.panel {
+  position: absolute; background: rgba(241,232,211,0.92);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid var(--line); border-radius: 1px; padding: 16px 18px;
+  box-shadow: 0 1px 0 rgba(255,248,230,0.6) inset, 0 16px 40px -12px rgba(42,32,26,0.22), 0 2px 8px rgba(42,32,26,0.06);
+}
+#header-panel { top: 20px; left: 20px; width: 300px; z-index: 5; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--soft-ink); opacity: 0.75; }
+.title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 26px; line-height: 1.05; letter-spacing: -0.015em; margin-top: 4px; font-variation-settings: "opsz" 144; }
+.title em { font-style: italic; font-weight: 400; color: var(--rust); }
+.location-line { font-family: 'Fraunces', serif; font-size: 13px; font-style: italic; color: var(--soft-ink); margin-top: 6px; }
+.status-row { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--soft-ink); letter-spacing: 0.04em; margin-top: 12px; padding-top: 10px; border-top: 1px dotted var(--line); opacity: 0.9; }
+#controls-hint { top: 20px; right: 20px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--soft-ink); text-align: right; letter-spacing: 0.03em; padding: 12px 14px; line-height: 1.7; z-index: 5; }
+#attribution { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.06em; color: var(--soft-ink); opacity: 0.7; text-transform: uppercase; pointer-events: none; z-index: 5; }
+#hint-empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; z-index: 4; }
+#hint-empty.show { display: flex; }
+#hint-empty .box { max-width: 440px; }
+#hint-empty p { font-size: 14px; line-height: 1.6; color: var(--soft-ink); margin-top: 10px; }
+#hint-empty code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(42,32,26,0.06); padding: 2px 6px; border-radius: 2px; color: var(--ink); }
+#hint-empty .sub { font-size: 11px; opacity: 0.7; margin-top: 16px; }
+.pick { margin-top: 14px; background: var(--ink); color: var(--bone); border: none; border-radius: 3px; padding: 10px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.04em; cursor: pointer; }
+.pick:hover { opacity: 0.88; }
+body.dragging #osd { outline: 3px dashed var(--terracotta); outline-offset: -10px; }
+.osd-navigator { border: 1px solid var(--line) !important; border-radius: 1px; }
+</style>
+</head>
+<body>
+<div id="osd"></div>
+
+<div id="header-panel" class="panel">
+  <div class="eyebrow">Ilustrado · ISO · CDMX</div>
+  <h1 class="title">CDMX <em>isométrico</em></h1>
+  <div class="location-line" id="location-line">Centro · piloto ilustrado</div>
+  <div id="status" class="status-row">Cargando…</div>
+</div>
+
+<div id="controls-hint" class="panel">
+  <div>arrastrar · mover</div>
+  <div>scroll · zoom</div>
+</div>
+
+<div id="hint-empty">
+  <div class="box panel">
+    <div class="eyebrow">Tu render ilustrado</div>
+    <p><strong>Arrastra tu imagen aquí</strong><br>(el render de Nano Banana)</p>
+    <button id="pick-btn" class="pick">o elegir imagen…</button>
+    <p class="sub">Para dejarla fija, guárdala como <code>art/cdmx.png</code>.</p>
+    <input id="file-input" type="file" accept="image/*" hidden>
+  </div>
+</div>
+
+<div id="attribution">Ilustración · base © Google · estilizado con IA</div>
+
+<script>
+  // Seamless Deep Zoom pyramid of the illustrated CDMX (assets sit beside this page).
+  const SOURCE = './cdmx-full.jpg';   // single-image fallback (current, seamless)
+  const DZI = './cdmx.dzi';           // primary: tile pyramid
+  const statusEl = document.getElementById('status');
+  const hintEl = document.getElementById('hint-empty');
+
+  // create the viewer once; images are opened into it on demand
+  const viewer = OpenSeadragon({
+    id: 'osd',
+    prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+    showNavigator: true,
+    navigatorPosition: 'BOTTOM_RIGHT',
+    navigatorSizeRatio: 0.13,
+    navigatorBorderColor: 'rgba(42,32,26,0.2)',
+    backgroundColor: '#f1e8d3',
+    gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: true },
+    showZoomControl: false, showHomeControl: false, showFullPageControl: false,
+    minZoomImageRatio: 0.6, maxZoomPixelRatio: 3, visibilityRatio: 0.85,
+    animationTime: 0.4, springStiffness: 8,
+  });
+  viewer.addHandler('open', () => { hintEl.classList.remove('show'); statusEl.textContent = 'Listo · arrastra para explorar'; });
+  viewer.addHandler('open-failed', () => { statusEl.textContent = 'No se pudo abrir la imagen'; hintEl.classList.add('show'); });
+  window.__viewer = viewer;
+
+  function loadSource(src) {
+    statusEl.textContent = 'Cargando…';
+    if (typeof src === 'string' && src.endsWith('.dzi')) viewer.open(src);   // Deep Zoom pyramid
+    else viewer.open({ type: 'image', url: src });                            // single image / data URL
+  }
+  function loadFile(file) {
+    if (!file || !file.type.startsWith('image/')) { statusEl.textContent = 'Eso no es una imagen'; return; }
+    const r = new FileReader();
+    r.onload = () => loadSource(r.result);
+    r.readAsDataURL(file);
+  }
+  window.__loadImage = loadSource;
+
+  // drag & drop anywhere on the page
+  ['dragenter', 'dragover'].forEach((ev) => window.addEventListener(ev, (e) => { e.preventDefault(); document.body.classList.add('dragging'); }));
+  ['dragleave', 'drop'].forEach((ev) => window.addEventListener(ev, (e) => { e.preventDefault(); document.body.classList.remove('dragging'); }));
+  window.addEventListener('drop', (e) => { if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+  // file picker
+  const fileInput = document.getElementById('file-input');
+  document.getElementById('pick-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+
+  // prefer the stitched Deep Zoom pyramid → single image → otherwise invite a drop
+  fetch(DZI, { cache: 'no-store' })
+    .then((r) => { if (!r.ok) throw 0; loadSource(DZI); })
+    .catch(() => {
+      const probe = new Image();
+      probe.onload = () => loadSource(SOURCE);
+      probe.onerror = () => { statusEl.textContent = 'Arrastra tu render aquí'; hintEl.classList.add('show'); };
+      probe.src = SOURCE;
+    });
+</script>
+</body>
+</html>
