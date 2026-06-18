@@ -135,7 +135,20 @@ let firstContent = false;
 let safetyTimer = null;
 let anchorLat = HOME.lat, anchorLon = HOME.lon;
 
-function initTiles(apiToken, lat, lon) {
+// CDMX sits at ~2240 m; the anchor must be placed on the GROUND, not the sea-level ellipsoid, or the
+// tilted iso camera renders a point ~1.6 km away. Look up terrain elevation per anchor (it varies
+// across the city), with a safe fallback if the lookup fails.
+const ELEV_FALLBACK = 2240;
+async function elevationFor(lat, lon) {
+  try {
+    const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`, { signal: AbortSignal.timeout(2500) });
+    if (!r.ok) throw 0;
+    const e = (await r.json())?.elevation?.[0];
+    return Number.isFinite(e) ? e : ELEV_FALLBACK;
+  } catch { return ELEV_FALLBACK; }
+}
+
+function initTiles(apiToken, lat, lon, height = ELEV_FALLBACK) {
   tiles = new TilesRenderer();
   tiles.registerPlugin(new GoogleCloudAuthPlugin({ apiToken, autoRefreshToken: true }));
   tiles.registerPlugin(new TileCompressionPlugin());
@@ -149,7 +162,7 @@ function initTiles(apiToken, lat, lon) {
   tiles.registerPlugin(new ReorientationPlugin({
     lat: MathUtils.degToRad(lat),
     lon: MathUtils.degToRad(lon),
-    height: 0,
+    height,
   }));
 
   tiles.errorTarget = ERROR_TARGET;
@@ -175,9 +188,10 @@ function initTiles(apiToken, lat, lon) {
 }
 
 // Jump to a new anchor: dispose, re-create at lat/lon, recenter the camera.
-function reanchor(lat, lon, name, secondary) {
+async function reanchor(lat, lon, name, secondary) {
   if (tiles) { scene.remove(tiles.group); tiles.dispose(); tiles = null; }
-  initTiles(currentKey, lat, lon);
+  const height = await elevationFor(lat, lon);
+  initTiles(currentKey, lat, lon, height);
   controls.target.set(0, 0, 0);
   camera.zoom = 1;
   camera.updateProjectionMatrix();
@@ -267,7 +281,7 @@ window.addEventListener('resize', () => {
   currentKey = key;
   setCoords(HOME.lat, HOME.lon);
   setTitle('Plaza Luis Cabrera', HOME.secondary);
-  initTiles(currentKey, HOME.lat, HOME.lon);
+  initTiles(currentKey, HOME.lat, HOME.lon, await elevationFor(HOME.lat, HOME.lon));
   watchSearchReady();
   tick();
 })();
